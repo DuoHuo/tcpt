@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">LockScreen</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="lab_1">1</string>
+    <string name="lab_2">2</string>
+    <string name="lab_3">3</string>
+    <string name="lab_4">4</string>
+    <string name="lab_5">5</string>
+    <string name="lab_6">6</string>
+    <string name="lab_7">7</string>
+    <string name="lab_8">8</string>
+    <string name="lab_9">9</string>
+    <string name="lab_0">   0   </string>
+    <string name="clear">清空</string>
+    <string name="delete">删除</string>
+    <string name="blank"> </string>
+    
+
+</resources>
