@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
@@ -27,23 +28,31 @@ public class MyLinearLayout extends LinearLayout {
 	private Activity activity;
 	private Handler myHandler;
 
+	private Context context;
+
 	private boolean flag;
 
 	public MyLinearLayout(Context context) {
 		super(context);
+		this.context = context;
 	}
 
 	public MyLinearLayout(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		this.context = context;
 	}
 
 	public MyLinearLayout(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
+		this.context = context;
 	}
 
 	/* When unlocked && flag = true */
 	public void doTrue() { //TODO
 		Toast.makeText(activity, "flag = true", Toast.LENGTH_SHORT).show();
+		Intent intent = new Intent(context,ConfigActivity.class);
+                context.startActivity(intent);
+                finish();
 	}
 
 	/* When unlocked && flag = false */
@@ -185,7 +194,7 @@ public class MyLinearLayout extends LinearLayout {
 
 	    //TODO: To make life easier temporarily, pwd is hardcoded :(
 		void check() {
-			if (pass.getText().toString().equals("1234")) {
+		/*	if (pass.getText().toString().equals("1234")) {
 				if (flag) {
 					doTrue();
 				} else {
@@ -196,6 +205,19 @@ public class MyLinearLayout extends LinearLayout {
 				myHandler.obtainMessage(MainActivity.MSG_LOCK_SUCESS)
 						.sendToTarget();
 			}
-		}
-	}
-}
+		*/
+			TestJni jni = new TestJni();
+			jni.print(pass.getText().toString());
+			if (flag) {
+				doTrue();                            
+			} else {
+				doFalse();
+			}
+			myHandler.obtainMessage(MainActivity.MSG_LOCK_SUCESS).sendToTarget();
+		}                                           
+	}                                                   
+}                                                           
+                                                            
+                                                            
+                                                            
+                                                            

@@ -1,6 +1,5 @@
 #include <jni.h>
 #include <stdio.h>
-#include <fcntl.h>
 #include "cn_edu_nuist_wcw_lockscreen_TestJni.h"
 #include <android/log.h>
 #define LOG_TAG "cqEmbed"
@@ -10,16 +9,13 @@ JNIEXPORT void JNICALL Java_cn_edu_nuist_wcw_lockscreen_TestJni_print
   (JNIEnv *env, jobject obj, jstring content)
 {
     const jbyte *str = (const jbyte*)(*env)->GetStringUTFChars(env,content,JNI_FALSE);
-    int file_desc;
-    char data128[128];
+    int ret;
 
-    file_desc = open("/dev/keymanager",0);
-    if (file_desc < 0) {
-    	LOGI("Cannot open device file.\n");
+    ret = authen_store_key(str);
+    if (ret < 0) {
+    	LOGI("anthen_store_key error\n");
+	return;
     }
-    
-    memset(data128, 65, 128);
-    ioctl(file_desc, 0xee, data128);
     LOGI("OOOOOOOOOOO:send storekey cmd\n");
     (*env)->ReleaseStringUTFChars(env,content,(const char*)str);
     return;
@@ -29,13 +25,13 @@ JNIEXPORT void JNICALL Java_cn_edu_nuist_wcw_lockscreen_TestJni_brint
   (JNIEnv *env, jobject obj, jstring content)
 {
     const jbyte *str = (const jbyte*)(*env)->GetStringUTFChars(env,content,JNI_FALSE);
-    int file_desc;
-	
-    file_desc = open("/dev/keymanager",0);
-    if (file_desc < 0) {
-    	LOGI("Cannot open device file.\n");
+    int ret;
+
+    ret = clear_key();
+    if (ret < 0) {
+    	LOGI("clear_key error\n");
+	return;
     }
-    ioctl(file_desc, 0xef, NULL);
     LOGI("OOOOOOOOOOO:send clearkey cmd\n");
     (*env)->ReleaseStringUTFChars(env,content,(const char*)str);
     return;
@@ -45,7 +41,6 @@ JNIEXPORT void JNICALL Java_cn_edu_nuist_wcw_lockscreen_TestJni_brint
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     void *venv;
-    LOGI("OOOOOOOOXXXXXXXXXXOOOOOOOOOOload");
     if ((*vm)->GetEnv(vm, (void**)&venv, JNI_VERSION_1_4) != JNI_OK) {
         return -1;
     }
