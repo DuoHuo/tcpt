@@ -11,7 +11,7 @@ int reg_pwd(char *pwd)
     int size;
 
 	md5((uint8_t *)pwd, strlen(pwd), result);
-	filp = fopen(MD5_PATH,"rw");
+	filp = fopen(MD5_PATH,"wb+");
 	if (!filp) {
         LOGI("fopen err %s\n",MD5_PATH);
 		return -1;
@@ -42,7 +42,7 @@ int authen_store_key(char *pwd)
 
 	/* Compare md5 value */
 	md5((uint8_t *)pwd, strlen(pwd), target);
-	filp = fopen(MD5_PATH,"rw");
+	filp = fopen(MD5_PATH,"r+");
 	if (!filp) {
 		return -1;
 	}

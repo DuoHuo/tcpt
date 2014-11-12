@@ -9,5 +9,5 @@
 int reg_pwd(char *pwd);
 int authen_store_key(char *pwd);
 int clear_key();
-#define MD5_PATH "/mnt/ase/hello"
+#define MD5_PATH "/sdcard/.shadow"
 #endif 
