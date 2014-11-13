@@ -7,12 +7,12 @@
 
 #define DEVICE_NAME "key_manager"
 #define MAJOR_NUM 138
-#define KEY_LEN 128
+#define KEY_LEN 20
 
 #define IOC_STOREKEY	0xee
 #define IOC_CLEARKEY	0xef
 
-char keyring[KEY_LEN];
+uint8_t keyring[KEY_LEN];
 EXPORT_SYMBOL(keyring);
 
 long device_ioctl(

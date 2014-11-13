@@ -11,7 +11,7 @@
 
 #include "wrapfs.h"
 
-extern char keyring[128];
+extern uint8_t keyring[20];
 
 static ssize_t wrapfs_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *ppos)

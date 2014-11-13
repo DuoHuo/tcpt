@@ -5,10 +5,13 @@ if [ ${PATH%%:*} != ${TOOLCHAIN} ];then
 PATH=${TOOLCHAIN}:${PATH}
 fi
 
+cd ./keymanager
+make -C ${KERNELSRC} M=$PWD
+cp ./Module.symvers ../tcptfs/
+cd ../
+
 cd ./tcptfs
 make CONFIG_WRAP_FS=m -C ${KERNELSRC} M=$PWD
 cd ../
 
-cd ./keymanager
-make -C ${KERNELSRC} M=$PWD
-cd ../
+

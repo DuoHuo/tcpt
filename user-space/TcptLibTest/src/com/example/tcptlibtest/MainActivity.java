@@ -67,8 +67,7 @@ public class MainActivity extends Activity {
 					// 这里是主要程序代码ATAAW.COM
 					DataOutputStream os = new DataOutputStream(process
 							.getOutputStream());
-					os.writeBytes("sh /sdcard/tcpt/insfs.sh\n");
-					os.writeBytes("exit\n");
+					os.writeBytes("sh /sdcard/tcpt2/testsh.sh\n");
 					os.writeBytes("exit\n");
 					os.flush();
 					process.waitFor();
