@@ -1,50 +1,39 @@
-/*
- * Copyright (c) 1998-2013 Erez Zadok
- * Copyright (c) 2009	   Shrikar Archak
- * Copyright (c) 2003-2013 Stony Brook University
- * Copyright (c) 2003-2013 The Research Foundation of SUNY
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
-
-#include "wrapfs.h"
+#include "tcptfs.h"
 
 /* The dentry cache is just so we have properly sized dentries */
-static struct kmem_cache *wrapfs_dentry_cachep;
+static struct kmem_cache *tcptfs_dentry_cachep;
 
-int wrapfs_init_dentry_cache(void)
+int tcptfs_init_dentry_cache(void)
 {
-	wrapfs_dentry_cachep =
-		kmem_cache_create("wrapfs_dentry",
-				  sizeof(struct wrapfs_dentry_info),
+	tcptfs_dentry_cachep =
+		kmem_cache_create("tcptfs_dentry",
+				  sizeof(struct tcptfs_dentry_info),
 				  0, SLAB_RECLAIM_ACCOUNT, NULL);
 
-	return wrapfs_dentry_cachep ? 0 : -ENOMEM;
+	return tcptfs_dentry_cachep ? 0 : -ENOMEM;
 }
 
-void wrapfs_destroy_dentry_cache(void)
+void tcptfs_destroy_dentry_cache(void)
 {
-	if (wrapfs_dentry_cachep)
-		kmem_cache_destroy(wrapfs_dentry_cachep);
+	if (tcptfs_dentry_cachep)
+		kmem_cache_destroy(tcptfs_dentry_cachep);
 }
 
 void free_dentry_private_data(struct dentry *dentry)
 {
 	if (!dentry || !dentry->d_fsdata)
 		return;
-	kmem_cache_free(wrapfs_dentry_cachep, dentry->d_fsdata);
+	kmem_cache_free(tcptfs_dentry_cachep, dentry->d_fsdata);
 	dentry->d_fsdata = NULL;
 }
 
 /* allocate new dentry private data */
 int new_dentry_private_data(struct dentry *dentry)
 {
-	struct wrapfs_dentry_info *info = WRAPFS_D(dentry);
+	struct tcptfs_dentry_info *info = TCPTFS_D(dentry);
 
 	/* use zalloc to init dentry_info.lower_path */
-	info = kmem_cache_zalloc(wrapfs_dentry_cachep, GFP_ATOMIC);
+	info = kmem_cache_zalloc(tcptfs_dentry_cachep, GFP_ATOMIC);
 	if (!info)
 		return -ENOMEM;
 
@@ -54,25 +43,25 @@ int new_dentry_private_data(struct dentry *dentry)
 	return 0;
 }
 
-static int wrapfs_inode_test(struct inode *inode, void *candidate_lower_inode)
+static int tcptfs_inode_test(struct inode *inode, void *candidate_lower_inode)
 {
-	struct inode *current_lower_inode = wrapfs_lower_inode(inode);
+	struct inode *current_lower_inode = tcptfs_lower_inode(inode);
 	if (current_lower_inode == (struct inode *)candidate_lower_inode)
 		return 1; /* found a match */
 	else
 		return 0; /* no match */
 }
 
-static int wrapfs_inode_set(struct inode *inode, void *lower_inode)
+static int tcptfs_inode_set(struct inode *inode, void *lower_inode)
 {
-	/* we do actual inode initialization in wrapfs_iget */
+	/* we do actual inode initialization in tcptfs_iget */
 	return 0;
 }
 
-static struct inode *wrapfs_iget(struct super_block *sb,
+static struct inode *tcptfs_iget(struct super_block *sb,
 				 struct inode *lower_inode)
 {
-	struct wrapfs_inode_info *info;
+	struct tcptfs_inode_info *info;
 	struct inode *inode; /* the new inode to return */
 	int err;
 
@@ -83,8 +72,8 @@ static struct inode *wrapfs_iget(struct super_block *sb,
 			      * instead.
 			      */
 			     lower_inode->i_ino, /* hashval */
-			     wrapfs_inode_test,	/* inode comparison function */
-			     wrapfs_inode_set, /* inode init function */
+			     tcptfs_inode_test,	/* inode comparison function */
+			     tcptfs_inode_set, /* inode init function */
 			     lower_inode); /* data passed to test+set fxns */
 	if (!inode) {
 		err = -EACCES;
@@ -96,32 +85,32 @@ static struct inode *wrapfs_iget(struct super_block *sb,
 		return inode;
 
 	/* initialize new inode */
-	info = WRAPFS_I(inode);
+	info = TCPTFS_I(inode);
 
 	inode->i_ino = lower_inode->i_ino;
 	if (!igrab(lower_inode)) {
 		err = -ESTALE;
 		return ERR_PTR(err);
 	}
-	wrapfs_set_lower_inode(inode, lower_inode);
+	tcptfs_set_lower_inode(inode, lower_inode);
 
 	inode->i_version++;
 
 	/* use different set of inode ops for symlinks & directories */
 	if (S_ISDIR(lower_inode->i_mode))
-		inode->i_op = &wrapfs_dir_iops;
+		inode->i_op = &tcptfs_dir_iops;
 	else if (S_ISLNK(lower_inode->i_mode))
-		inode->i_op = &wrapfs_symlink_iops;
+		inode->i_op = &tcptfs_symlink_iops;
 	else
-		inode->i_op = &wrapfs_main_iops;
+		inode->i_op = &tcptfs_main_iops;
 
 	/* use different set of file ops for directories */
 	if (S_ISDIR(lower_inode->i_mode))
-		inode->i_fop = &wrapfs_dir_fops;
+		inode->i_fop = &tcptfs_dir_fops;
 	else
-		inode->i_fop = &wrapfs_main_fops;
+		inode->i_fop = &tcptfs_main_fops;
 
-	inode->i_mapping->a_ops = &wrapfs_aops;
+	inode->i_mapping->a_ops = &tcptfs_aops;
 
 	inode->i_atime.tv_sec = 0;
 	inode->i_atime.tv_nsec = 0;
@@ -145,14 +134,14 @@ static struct inode *wrapfs_iget(struct super_block *sb,
 }
 
 /*
- * Connect a wrapfs inode dentry/inode with several lower ones.  This is
+ * Connect a tcptfs inode dentry/inode with several lower ones.  This is
  * the classic stackable file system "vnode interposition" action.
  *
- * @dentry: wrapfs's dentry which interposes on lower one
- * @sb: wrapfs's super_block
+ * @dentry: tcptfs's dentry which interposes on lower one
+ * @sb: tcptfs's super_block
  * @lower_path: the lower path (caller does path_get/put)
  */
-int wrapfs_interpose(struct dentry *dentry, struct super_block *sb,
+int tcptfs_interpose(struct dentry *dentry, struct super_block *sb,
 		     struct path *lower_path)
 {
 	int err = 0;
@@ -161,7 +150,7 @@ int wrapfs_interpose(struct dentry *dentry, struct super_block *sb,
 	struct super_block *lower_sb;
 
 	lower_inode = lower_path->dentry->d_inode;
-	lower_sb = wrapfs_lower_super(sb);
+	lower_sb = tcptfs_lower_super(sb);
 
 	/* check that the lower file system didn't cross a mount point */
 	if (lower_inode->i_sb != lower_sb) {
@@ -170,12 +159,12 @@ int wrapfs_interpose(struct dentry *dentry, struct super_block *sb,
 	}
 
 	/*
-	 * We allocate our new inode below by calling wrapfs_iget,
+	 * We allocate our new inode below by calling tcptfs_iget,
 	 * which will initialize some of the new inode's fields
 	 */
 
-	/* inherit lower inode number for wrapfs's inode */
-	inode = wrapfs_iget(sb, lower_inode);
+	/* inherit lower inode number for tcptfs's inode */
+	inode = tcptfs_iget(sb, lower_inode);
 	if (IS_ERR(inode)) {
 		err = PTR_ERR(inode);
 		goto out;
@@ -188,12 +177,12 @@ out:
 }
 
 /*
- * Main driver function for wrapfs's lookup.
+ * Main driver function for tcptfs's lookup.
  *
  * Returns: NULL (ok), ERR_PTR if an error occurred.
  * Fills in lower_parent_path with <dentry,mnt> on success.
  */
-static struct dentry *__wrapfs_lookup(struct dentry *dentry, int flags,
+static struct dentry *__tcptfs_lookup(struct dentry *dentry, int flags,
 				      struct path *lower_parent_path)
 {
 	int err = 0;
@@ -206,7 +195,7 @@ static struct dentry *__wrapfs_lookup(struct dentry *dentry, int flags,
 	struct qstr this;
 
 	/* must initialize dentry operations */
-	d_set_d_op(dentry, &wrapfs_dops);
+	d_set_d_op(dentry, &tcptfs_dops);
 
 	if (IS_ROOT(dentry))
 		goto out;
@@ -223,10 +212,10 @@ static struct dentry *__wrapfs_lookup(struct dentry *dentry, int flags,
 
 	/* no error: handle positive dentries */
 	if (!err) {
-		wrapfs_set_lower_path(dentry, &lower_nd.path);
-		err = wrapfs_interpose(dentry, dentry->d_sb, &lower_nd.path);
+		tcptfs_set_lower_path(dentry, &lower_nd.path);
+		err = tcptfs_interpose(dentry, dentry->d_sb, &lower_nd.path);
 		if (err) /* path_put underlying path on error */
-			wrapfs_put_reset_lower_path(dentry);
+			tcptfs_put_reset_lower_path(dentry);
 		goto out;
 	}
 
@@ -255,7 +244,7 @@ static struct dentry *__wrapfs_lookup(struct dentry *dentry, int flags,
 setup_lower:
 	lower_path.dentry = lower_dentry;
 	lower_path.mnt = mntget(lower_dir_mnt);
-	wrapfs_set_lower_path(dentry, &lower_path);
+	tcptfs_set_lower_path(dentry, &lower_path);
 
 	/*
 	 * If the intent is to create a file, then don't return an error, so
@@ -269,7 +258,7 @@ out:
 	return ERR_PTR(err);
 }
 
-struct dentry *wrapfs_lookup(struct inode *dir, struct dentry *dentry,
+struct dentry *tcptfs_lookup(struct inode *dir, struct dentry *dentry,
 			     struct nameidata *nd)
 {
 	struct dentry *ret, *parent;
@@ -279,7 +268,7 @@ struct dentry *wrapfs_lookup(struct inode *dir, struct dentry *dentry,
 	BUG_ON(!nd);
 	parent = dget_parent(dentry);
 
-	wrapfs_get_lower_path(parent, &lower_parent_path);
+	tcptfs_get_lower_path(parent, &lower_parent_path);
 
 	/* allocate dentry private data.  We free it in ->d_release */
 	err = new_dentry_private_data(dentry);
@@ -287,20 +276,20 @@ struct dentry *wrapfs_lookup(struct inode *dir, struct dentry *dentry,
 		ret = ERR_PTR(err);
 		goto out;
 	}
-	ret = __wrapfs_lookup(dentry, nd->flags, &lower_parent_path);
+	ret = __tcptfs_lookup(dentry, nd->flags, &lower_parent_path);
 	if (IS_ERR(ret))
 		goto out;
 	if (ret)
 		dentry = ret;
 	if (dentry->d_inode)
 		fsstack_copy_attr_times(dentry->d_inode,
-					wrapfs_lower_inode(dentry->d_inode));
+					tcptfs_lower_inode(dentry->d_inode));
 	/* update parent directory's atime */
 	fsstack_copy_attr_atime(parent->d_inode,
-				wrapfs_lower_inode(parent->d_inode));
+				tcptfs_lower_inode(parent->d_inode));
 
 out:
-	wrapfs_put_lower_path(parent, &lower_parent_path);
+	tcptfs_put_lower_path(parent, &lower_parent_path);
 	dput(parent);
 	return ret;
 }

@@ -1,4 +1,4 @@
-#include "wrapfs.h"
+#include "tcptfs.h"
 
 int encrypt(char *buf, size_t buflen, char *key, size_t keylen)
 {

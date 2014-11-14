@@ -1,19 +1,8 @@
-/*
- * Copyright (c) 1998-2013 Erez Zadok
- * Copyright (c) 2009	   Shrikar Archak
- * Copyright (c) 2003-2013 Stony Brook University
- * Copyright (c) 2003-2013 The Research Foundation of SUNY
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
-
-#include "wrapfs.h"
+#include "tcptfs.h"
 
 extern uint8_t keyring[20];
 
-static ssize_t wrapfs_read(struct file *file, char __user *buf,
+static ssize_t tcptfs_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *ppos)
 {
 	int err;
@@ -21,7 +10,7 @@ static ssize_t wrapfs_read(struct file *file, char __user *buf,
 	struct dentry *dentry = file->f_path.dentry;
 	size_t keylen;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	err = vfs_read(lower_file, buf, count, ppos);
 	keylen = sizeof(keyring);
 	decrypt(buf, count, keyring, keylen);
@@ -33,7 +22,7 @@ static ssize_t wrapfs_read(struct file *file, char __user *buf,
 	return err;
 }
 
-static ssize_t wrapfs_write(struct file *file, const char __user *buf,
+static ssize_t tcptfs_write(struct file *file, const char __user *buf,
 			    size_t count, loff_t *ppos)
 {
 	int err = 0;
@@ -41,7 +30,7 @@ static ssize_t wrapfs_write(struct file *file, const char __user *buf,
 	struct dentry *dentry = file->f_path.dentry;
 	size_t keylen;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	keylen = sizeof(keyring);
 	encrypt((char *)buf, count, keyring, keylen);
 	err = vfs_write(lower_file, (char *)buf, count, ppos);
@@ -56,13 +45,13 @@ static ssize_t wrapfs_write(struct file *file, const char __user *buf,
 	return err;
 }
 
-static int wrapfs_readdir(struct file *file, void *dirent, filldir_t filldir)
+static int tcptfs_readdir(struct file *file, void *dirent, filldir_t filldir)
 {
 	int err = 0;
 	struct file *lower_file = NULL;
 	struct dentry *dentry = file->f_path.dentry;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	err = vfs_readdir(lower_file, filldir, dirent);
 	file->f_pos = lower_file->f_pos;
 	if (err >= 0)		/* copy the atime */
@@ -71,13 +60,13 @@ static int wrapfs_readdir(struct file *file, void *dirent, filldir_t filldir)
 	return err;
 }
 
-static long wrapfs_unlocked_ioctl(struct file *file, unsigned int cmd,
+static long tcptfs_unlocked_ioctl(struct file *file, unsigned int cmd,
 				  unsigned long arg)
 {
 	long err = -ENOTTY;
 	struct file *lower_file;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 
 	/* XXX: use vfs_ioctl if/when VFS exports it */
 	if (!lower_file || !lower_file->f_op)
@@ -94,13 +83,13 @@ out:
 }
 
 #ifdef CONFIG_COMPAT
-static long wrapfs_compat_ioctl(struct file *file, unsigned int cmd,
+static long tcptfs_compat_ioctl(struct file *file, unsigned int cmd,
 				unsigned long arg)
 {
 	long err = -ENOTTY;
 	struct file *lower_file;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 
 	/* XXX: use vfs_ioctl if/when VFS exports it */
 	if (!lower_file || !lower_file->f_op)
@@ -113,7 +102,7 @@ out:
 }
 #endif
 
-static int wrapfs_mmap(struct file *file, struct vm_area_struct *vma)
+static int tcptfs_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	int err = 0;
 	bool willwrite;
@@ -133,10 +122,10 @@ static int wrapfs_mmap(struct file *file, struct vm_area_struct *vma)
 	 * not, return EINVAL (the same error that
 	 * generic_file_readonly_mmap returns in that case).
 	 */
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	if (willwrite && !lower_file->f_mapping->a_ops->writepage) {
 		err = -EINVAL;
-		printk(KERN_ERR "wrapfs: lower file system does not "
+		printk(KERN_ERR "tcptfs: lower file system does not "
 		       "support writeable mmap\n");
 		goto out;
 	}
@@ -146,10 +135,10 @@ static int wrapfs_mmap(struct file *file, struct vm_area_struct *vma)
 	 *
 	 * XXX: the VFS should have a cleaner way of finding the lower vm_ops
 	 */
-	if (!WRAPFS_F(file)->lower_vm_ops) {
+	if (!TCPTFS_F(file)->lower_vm_ops) {
 		err = lower_file->f_op->mmap(lower_file, vma);
 		if (err) {
-			printk(KERN_ERR "wrapfs: lower mmap failed %d\n", err);
+			printk(KERN_ERR "tcptfs: lower mmap failed %d\n", err);
 			goto out;
 		}
 		saved_vm_ops = vma->vm_ops; /* save: came from lower ->mmap */
@@ -160,18 +149,18 @@ static int wrapfs_mmap(struct file *file, struct vm_area_struct *vma)
 	 * don't want its test for ->readpage which returns -ENOEXEC.
 	 */
 	file_accessed(file);
-	vma->vm_ops = &wrapfs_vm_ops;
+	vma->vm_ops = &tcptfs_vm_ops;
 	vma->vm_flags |= VM_CAN_NONLINEAR;
 
-	file->f_mapping->a_ops = &wrapfs_aops; /* set our aops */
-	if (!WRAPFS_F(file)->lower_vm_ops) /* save for our ->fault */
-		WRAPFS_F(file)->lower_vm_ops = saved_vm_ops;
+	file->f_mapping->a_ops = &tcptfs_aops; /* set our aops */
+	if (!TCPTFS_F(file)->lower_vm_ops) /* save for our ->fault */
+		TCPTFS_F(file)->lower_vm_ops = saved_vm_ops;
 
 out:
 	return err;
 }
 
-static int wrapfs_open(struct inode *inode, struct file *file)
+static int tcptfs_open(struct inode *inode, struct file *file)
 {
 	int err = 0;
 	struct file *lower_file = NULL;
@@ -184,41 +173,41 @@ static int wrapfs_open(struct inode *inode, struct file *file)
 	}
 
 	file->private_data =
-		kzalloc(sizeof(struct wrapfs_file_info), GFP_KERNEL);
-	if (!WRAPFS_F(file)) {
+		kzalloc(sizeof(struct tcptfs_file_info), GFP_KERNEL);
+	if (!TCPTFS_F(file)) {
 		err = -ENOMEM;
 		goto out_err;
 	}
 
-	/* open lower object and link wrapfs's file struct to lower's */
-	wrapfs_get_lower_path(file->f_path.dentry, &lower_path);
+	/* open lower object and link tcptfs's file struct to lower's */
+	tcptfs_get_lower_path(file->f_path.dentry, &lower_path);
 	lower_file = dentry_open(lower_path.dentry, lower_path.mnt,
 				 file->f_flags, current_cred());
 	if (IS_ERR(lower_file)) {
 		err = PTR_ERR(lower_file);
-		lower_file = wrapfs_lower_file(file);
+		lower_file = tcptfs_lower_file(file);
 		if (lower_file) {
-			wrapfs_set_lower_file(file, NULL);
+			tcptfs_set_lower_file(file, NULL);
 			fput(lower_file); /* fput calls dput for lower_dentry */
 		}
 	} else {
-		wrapfs_set_lower_file(file, lower_file);
+		tcptfs_set_lower_file(file, lower_file);
 	}
 
 	if (err)
-		kfree(WRAPFS_F(file));
+		kfree(TCPTFS_F(file));
 	else
-		fsstack_copy_attr_all(inode, wrapfs_lower_inode(inode));
+		fsstack_copy_attr_all(inode, tcptfs_lower_inode(inode));
 out_err:
 	return err;
 }
 
-static int wrapfs_flush(struct file *file, fl_owner_t id)
+static int tcptfs_flush(struct file *file, fl_owner_t id)
 {
 	int err = 0;
 	struct file *lower_file = NULL;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	if (lower_file && lower_file->f_op && lower_file->f_op->flush)
 		err = lower_file->f_op->flush(lower_file, id);
 
@@ -226,75 +215,75 @@ static int wrapfs_flush(struct file *file, fl_owner_t id)
 }
 
 /* release all lower object references & free the file info structure */
-static int wrapfs_file_release(struct inode *inode, struct file *file)
+static int tcptfs_file_release(struct inode *inode, struct file *file)
 {
 	struct file *lower_file;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	if (lower_file) {
-		wrapfs_set_lower_file(file, NULL);
+		tcptfs_set_lower_file(file, NULL);
 		fput(lower_file);
 	}
 
-	kfree(WRAPFS_F(file));
+	kfree(TCPTFS_F(file));
 	return 0;
 }
 
-static int wrapfs_fsync(struct file *file, int datasync)
+static int tcptfs_fsync(struct file *file, int datasync)
 {
 	int err;
 	struct file *lower_file;
 	struct path lower_path;
 	struct dentry *dentry = file->f_path.dentry;
 
-	lower_file = wrapfs_lower_file(file);
-	wrapfs_get_lower_path(dentry, &lower_path);
+	lower_file = tcptfs_lower_file(file);
+	tcptfs_get_lower_path(dentry, &lower_path);
 	err = vfs_fsync(lower_file, datasync);
-	wrapfs_put_lower_path(dentry, &lower_path);
+	tcptfs_put_lower_path(dentry, &lower_path);
 
 	return err;
 }
 
-static int wrapfs_fasync(int fd, struct file *file, int flag)
+static int tcptfs_fasync(int fd, struct file *file, int flag)
 {
 	int err = 0;
 	struct file *lower_file = NULL;
 
-	lower_file = wrapfs_lower_file(file);
+	lower_file = tcptfs_lower_file(file);
 	if (lower_file->f_op && lower_file->f_op->fasync)
 		err = lower_file->f_op->fasync(fd, lower_file, flag);
 
 	return err;
 }
 
-const struct file_operations wrapfs_main_fops = {
+const struct file_operations tcptfs_main_fops = {
 	.llseek		= generic_file_llseek,
-	.read		= wrapfs_read,
-	.write		= wrapfs_write,
-	.unlocked_ioctl	= wrapfs_unlocked_ioctl,
+	.read		= tcptfs_read,
+	.write		= tcptfs_write,
+	.unlocked_ioctl	= tcptfs_unlocked_ioctl,
 #ifdef CONFIG_COMPAT
-	.compat_ioctl	= wrapfs_compat_ioctl,
+	.compat_ioctl	= tcptfs_compat_ioctl,
 #endif
-	.mmap		= wrapfs_mmap,
-	.open		= wrapfs_open,
-	.flush		= wrapfs_flush,
-	.release	= wrapfs_file_release,
-	.fsync		= wrapfs_fsync,
-	.fasync		= wrapfs_fasync,
+	.mmap		= tcptfs_mmap,
+	.open		= tcptfs_open,
+	.flush		= tcptfs_flush,
+	.release	= tcptfs_file_release,
+	.fsync		= tcptfs_fsync,
+	.fasync		= tcptfs_fasync,
 };
 
 /* trimmed directory options */
-const struct file_operations wrapfs_dir_fops = {
+const struct file_operations tcptfs_dir_fops = {
 	.llseek		= generic_file_llseek,
 	.read		= generic_read_dir,
-	.readdir	= wrapfs_readdir,
-	.unlocked_ioctl	= wrapfs_unlocked_ioctl,
+	.readdir	= tcptfs_readdir,
+	.unlocked_ioctl	= tcptfs_unlocked_ioctl,
 #ifdef CONFIG_COMPAT
-	.compat_ioctl	= wrapfs_compat_ioctl,
+	.compat_ioctl	= tcptfs_compat_ioctl,
 #endif
-	.open		= wrapfs_open,
-	.release	= wrapfs_file_release,
-	.flush		= wrapfs_flush,
-	.fsync		= wrapfs_fsync,
-	.fasync		= wrapfs_fasync,
+	.open		= tcptfs_open,
+	.release	= tcptfs_file_release,
+	.flush		= tcptfs_flush,
+	.fsync		= tcptfs_fsync,
+	.fasync		= tcptfs_fasync,
 };

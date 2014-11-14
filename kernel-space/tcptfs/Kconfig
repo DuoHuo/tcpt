@@ -1,9 +1,8 @@
-config WRAP_FS
-	tristate "Wrapfs stackable file system (EXPERIMENTAL)"
+config TCPT_FS
+	tristate "tcptfs stackable file system (EXPERIMENTAL)"
 	depends on EXPERIMENTAL
 	help
-	  Wrapfs is a stackable file system which simply passes its
-	  operations to the lower layer.  It is designed as a useful
-	  template for developing or debugging other stackable file systems,
-	  and more (see Documentation/filesystems/wrapfs.txt).  See
-	  <http://wrapfs.filesystems.org/> for details.
+	  tcptfs is a stackable file system which is part of TCPT
+	transparent encrypting and decrypting system. It filters 
+	the date passed by to with encryption and decryption. Use
+	this file system with user-space tools.

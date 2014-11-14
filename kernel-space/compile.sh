@@ -11,7 +11,7 @@ cp ./Module.symvers ../tcptfs/
 cd ../
 
 cd ./tcptfs
-make CONFIG_WRAP_FS=m -C ${KERNELSRC} M=$PWD
+make CONFIG_TCPT_FS=m -C ${KERNELSRC} M=$PWD
 cd ../
 
 
