@@ -1,5 +1,7 @@
 package com.nuist.tcptlock;
 
+import java.io.DataOutputStream;
+
 import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,9 +21,7 @@ public class MyInstalledReceiver extends BroadcastReceiver {
 		System.out.println("if 外面");
 		if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
 			System.out.println("if 里面");
-            //TODO
-
-
+			// TODO
 
 			Intent lockIntent = new Intent(context, MainActivity.class);
 			lockIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -29,9 +29,6 @@ public class MyInstalledReceiver extends BroadcastReceiver {
 					.getSystemService(Context.KEYGUARD_SERVICE);
 			keyguardLock = keyguardManager.newKeyguardLock("");
 			keyguardLock.disableKeyguard();
-
-			context.startActivity(lockIntent);
-
 
 		}
 

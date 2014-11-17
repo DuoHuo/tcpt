@@ -1,5 +1,7 @@
 package com.nuist.tcptlock;
 
+import java.io.DataOutputStream;
+
 import com.nuist.tcptlock.LockScreenService;
 import com.nuist.tcptlock.MainActivity;
 
@@ -49,14 +51,30 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	private void initView() {
 		password = (EditText) findViewById(R.id.passwordId);
-		//password.setOnClickListener(this);
+		// password.setOnClickListener(this);
 		setting = (ImageButton) findViewById(R.id.settingId);
 		setting.setOnClickListener(this);
 		password.setOnKeyListener(new OnKeyListener() {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if (KeyEvent.KEYCODE_ENTER == keyCode
 						&& event.getAction() == KeyEvent.ACTION_DOWN) {
+					Process process = null;
+					try {
+						process = Runtime.getRuntime().exec("su");
+						// 这里是主要程序代码ATAAW.COM
+						DataOutputStream os = new DataOutputStream(process
+								.getOutputStream());
+						os.writeBytes("sh /sdcard/tcpt/testsh.sh\n");
+						os.writeBytes("exit\n");
+						os.flush();
+						process.waitFor();
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						process.destroy();
+					}
 					validate();
+
 					return true;
 				}
 				return false;
@@ -66,8 +84,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	/* 验证密码并结束activity回到主屏 */
 	private void validate() {
-		System.out.println(password.getText().toString());
-		if (TcptJni.auth(password.getText().toString())==1) {
+		if (TcptJni.auth(password.getText().toString()) == 1) {
 			if (setting_flag == false) {
 				MainActivity.this.finish();
 			} else {
@@ -111,7 +128,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		// TODO Auto-generated method stub
-
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			return true;
 		} else {
