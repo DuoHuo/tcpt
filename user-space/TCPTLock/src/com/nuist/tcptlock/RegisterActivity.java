@@ -66,6 +66,7 @@ public class RegisterActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.closeSystemId:
 			//关闭系统按钮响应
+			  TcptJni.clearkey();
 			break;	
 			
 		}

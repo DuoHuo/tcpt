@@ -72,6 +72,8 @@ public class LockScreenService extends Service {
 			if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)
 					|| intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 				System.out.println("receiver.................");
+                TcptJni.clearkey();
+                System.out.println("clearkey over");
 				keyguardManager = (KeyguardManager) context
 						.getSystemService(Context.KEYGUARD_SERVICE);
 				// 取消默认的锁屏
