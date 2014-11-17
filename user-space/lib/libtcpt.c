@@ -19,6 +19,7 @@ int reg_pwd(char *pwd)
 	size = fwrite(result, 16, 1, filp);
     if (!size) {
         LOGI("fwrite err %s\n",MD5_PATH);
+        fclose(filp);
         return -1;
     }
 	fclose(filp);
@@ -42,12 +43,13 @@ int authen_store_key(char *pwd)
 
 	/* Compare md5 value */
 	md5((uint8_t *)pwd, strlen(pwd), target);
-	filp = fopen(MD5_PATH,"r+");
+	filp = fopen(MD5_PATH,"rb");
 	if (!filp) {
 		return -1;
 	}
 	fread(source, 16, 1, filp);
 	if (memcmp(target, source, 16)) {
+        fclose(filp);
 		return -1;
 	}
 	fclose(filp);
@@ -87,6 +89,8 @@ int clear_key()
 	close(dev_filp);
 	return 1;
 }
+
+#if 0
 /**
  * Mount secure path now and modify the init script so the path
  * will be automatically mounted when power on
@@ -103,4 +107,4 @@ int mknod_for_keymanager()
 {
 	return 0;
 }
-
+#endif

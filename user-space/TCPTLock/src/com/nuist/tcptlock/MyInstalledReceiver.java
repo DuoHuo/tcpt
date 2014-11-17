@@ -1,33 +1,40 @@
 package com.nuist.tcptlock;
 
+import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.sax.StartElementListener;
-import android.util.Log;
 
 public class MyInstalledReceiver extends BroadcastReceiver {
+
+	private KeyguardManager keyguardManager;
+	private KeyguardManager.KeyguardLock keyguardLock;
+
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		// TODO Auto-generated method stub
+		String action = intent.getAction();
 
-		if (intent.getAction().equals("android.intent.action.PACKAGE_ADDED")) {		// install
-			String packageName = intent.getDataString();
+		System.out.println("if 外面");
+		if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
+			System.out.println("if 里面");
+            //TODO
 
-			Log.i("homer", "安装了 :" + packageName);
+
+
+			Intent lockIntent = new Intent(context, MainActivity.class);
+			lockIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			keyguardManager = (KeyguardManager) context
+					.getSystemService(Context.KEYGUARD_SERVICE);
+			keyguardLock = keyguardManager.newKeyguardLock("");
+			keyguardLock.disableKeyguard();
+
+			context.startActivity(lockIntent);
+
+
 		}
 
-		if (intent.getAction().equals("android.intent.action.PACKAGE_REMOVED")) {	// uninstall
-			String packageName = intent.getDataString();
-
-			Log.i("homer", "卸载了 :" + packageName);
-		}
-		
-		if(intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {		// boot
-			Intent intent2 = new Intent(context, MainActivity.class);
-			intent2.setAction("android.intent.action.MAIN");
-			intent2.addCategory("android.intent.category.LAUNCHER");
-			intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			context.startActivity(intent2);
-		}
 	}
+
 }

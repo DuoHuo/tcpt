@@ -34,7 +34,7 @@ public class RegisterActivity extends Activity implements OnClickListener {
 
 	private void initView() {
 
-		setPassword = (EditText) findViewById(R.id.passwordId);
+		setPassword = (EditText) findViewById(R.id.passwordEditTextId);
 		setCataglogue = (EditText) findViewById(R.id.CatalogueEditTextId);
 		
 		confirmPassword = (Button) findViewById(R.id.confirmPasswordButtonId);
@@ -56,6 +56,7 @@ public class RegisterActivity extends Activity implements OnClickListener {
 		switch (v.getId()) {
 		case R.id.confirmPasswordButtonId:
 			//确认密码按钮响应
+            TcptJni.reg(setPassword.getText().toString());
 			break;
 		case R.id.confirmCatalogueButtonId:
 			//确认目录按钮响应

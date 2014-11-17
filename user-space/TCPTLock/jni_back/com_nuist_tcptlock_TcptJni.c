@@ -2,9 +2,6 @@
 #include <string.h>
 #include <jni.h>
 #include "libtcpt.h"
-#include <android/log.h>
-#define LOG_TAG "cqEmbed"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 
 /*
  * Class:     com_nuist_tcptlock_TcptJni

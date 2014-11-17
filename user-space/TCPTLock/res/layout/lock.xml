@@ -12,12 +12,18 @@
         android:layout_marginTop="20dp"
         android:background="@drawable/time" >
 
-        <AnalogClock
-            android:id="@+id/analogClock1"
-            android:layout_width="135dp"
-            android:layout_height="130dp"
-            android:layout_marginLeft="37dp"
-            android:layout_marginTop="23dp" />
+        <FrameLayout
+            android:layout_width="320dp"
+            android:layout_height="360dp" >
+
+            <AnalogClock
+                android:id="@+id/analogClock1"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:layout_marginLeft="60dp"
+                android:layout_marginTop="35dp" />
+
+        </FrameLayout>
     </FrameLayout>
 
     <FrameLayout
@@ -35,6 +41,8 @@
             android:layout_marginTop="11dp"
             android:background="@null"
             android:ems="11"
+            android:gravity="center_horizontal"
+            android:hint="Please Enter Password"
             android:inputType="textPassword" />
     </FrameLayout>
 
@@ -42,9 +50,10 @@
         android:id="@+id/settingId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/setting"
         android:layout_marginLeft="300dp"
         android:layout_marginTop="130dp"
-        ></ImageButton>"
+        android:background="@drawable/setting" >
+    </ImageButton>
+"
 
 </LinearLayout>
