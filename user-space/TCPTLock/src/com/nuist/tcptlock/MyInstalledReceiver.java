@@ -18,18 +18,14 @@ public class MyInstalledReceiver extends BroadcastReceiver {
 		// TODO Auto-generated method stub
 		String action = intent.getAction();
 
-		System.out.println("if 外面");
 		if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
-			System.out.println("if 里面");
-			// TODO
-
 			Intent lockIntent = new Intent(context, MainActivity.class);
 			lockIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			keyguardManager = (KeyguardManager) context
 					.getSystemService(Context.KEYGUARD_SERVICE);
 			keyguardLock = keyguardManager.newKeyguardLock("");
 			keyguardLock.disableKeyguard();
-
+			context.startActivity(lockIntent);
 		}
 
 	}
