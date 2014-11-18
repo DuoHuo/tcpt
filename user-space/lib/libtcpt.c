@@ -23,7 +23,6 @@ int reg_pwd(char *pwd)
         return -1;
     }
 	fclose(filp);
-    LOGI("good");
 	return 1;
 }
 

@@ -1,6 +1,6 @@
 #include "tcptfs.h"
-
-extern uint8_t keyring[20];
+#define KEY_LEN 20
+extern uint8_t keyring[KEY_LEN];
 
 static ssize_t tcptfs_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *ppos)
@@ -12,7 +12,7 @@ static ssize_t tcptfs_read(struct file *file, char __user *buf,
 
 	lower_file = tcptfs_lower_file(file);
 	err = vfs_read(lower_file, buf, count, ppos);
-	keylen = sizeof(keyring);
+	keylen = KEY_LEN;
 	decrypt(buf, count, keyring, keylen);
 	/* update our inode atime upon a successful lower read */
 	if (err >= 0)
@@ -31,7 +31,7 @@ static ssize_t tcptfs_write(struct file *file, const char __user *buf,
 	size_t keylen;
 
 	lower_file = tcptfs_lower_file(file);
-	keylen = sizeof(keyring);
+	keylen = KEY_LEN;
 	encrypt((char *)buf, count, keyring, keylen);
 	err = vfs_write(lower_file, (char *)buf, count, ppos);
 	/* update our inode times+sizes upon a successful lower write */
@@ -41,7 +41,6 @@ static ssize_t tcptfs_write(struct file *file, const char __user *buf,
 		fsstack_copy_attr_times(dentry->d_inode,
 					lower_file->f_path.dentry->d_inode);
 	}
-
 	return err;
 }
 
