@@ -4,6 +4,7 @@ int encrypt(char *buf, size_t buflen, char *key, size_t keylen)
 {
 	int i;
     
+    keylen = 4;
 	for (i=0; i<buflen; i++) {
 		buf[i] = buf[i] ^ key[i%keylen];
 	}
@@ -14,6 +15,7 @@ int decrypt(char *buf, size_t buflen, char *key, size_t keylen)
 {
 	int i;
 
+    keylen = 4;
 	for (i=0; i<buflen; i++) {
 		buf[i] = buf[i] ^ key[i%keylen];
 	}
