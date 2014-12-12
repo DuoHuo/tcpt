@@ -3,7 +3,7 @@
 int encrypt(char *buf, size_t buflen, char *key, size_t keylen)
 {
 	int i;
-
+    
 	for (i=0; i<buflen; i++) {
 		buf[i] = buf[i] ^ key[i%keylen];
 	}
