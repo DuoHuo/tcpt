@@ -1,7 +1,7 @@
 #include "tcptfs.h"
 #define KEY_LEN 20
 extern uint8_t keyring[KEY_LEN];
-
+#if 0
 static ssize_t tcptfs_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *ppos)
 {
@@ -43,6 +43,7 @@ static ssize_t tcptfs_write(struct file *file, const char __user *buf,
 	}
 	return err;
 }
+#endif
 
 static int tcptfs_readdir(struct file *file, void *dirent, filldir_t filldir)
 {
@@ -257,8 +258,10 @@ static int tcptfs_fasync(int fd, struct file *file, int flag)
 
 const struct file_operations tcptfs_main_fops = {
 	.llseek		= generic_file_llseek,
-	.read		= tcptfs_read,
-	.write		= tcptfs_write,
+	.read		= do_sync_read,
+	.aio_read	= generic_file_aio_read,
+	.write		= do_sync_write,
+	.aio_write	= generic_file_aio_write,
 	.unlocked_ioctl	= tcptfs_unlocked_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= tcptfs_compat_ioctl,

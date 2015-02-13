@@ -3,9 +3,30 @@
 static int tcptfs_readpage(struct file *file, struct page *page)
 {
 	printk(KERN_ERR "invoking tcptfs_readpage\n");
-	return -1;
+	return 0;
 }
 
+static int tcptfs_writepage(struct page *page, struct writeback_control *wbc)
+{
+	printk(KERN_ERR "invoking tcptfs_writepage\n");
+	return 0;
+}
+
+static int tcptfs_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **page, void **fsdata)
+{
+	printk(KERN_ERR "invoking tcptfs_write_begin\n");
+	return 0;
+}
+
+static int tcptfs_write_end(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned copied,
+			struct page *page, void *fsdata)
+{
+	printk(KERN_ERR "invoking tcptfs_write_end\n");
+	return 0;
+}
 
 static int tcptfs_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
@@ -41,8 +62,10 @@ static int tcptfs_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
  * the a_ops vector to be non-NULL.
  */
 const struct address_space_operations tcptfs_aops = {
-	/* empty on purpose */
+	.writepage = tcptfs_writepage,
 	.readpage = tcptfs_readpage,
+	.write_begin = tcptfs_write_begin,
+	.write_end = tcptfs_write_end,
 };
 
 const struct vm_operations_struct tcptfs_vm_ops = {
