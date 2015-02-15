@@ -1,5 +1,15 @@
 #include "tcptfs.h"
 
+int tcptfs_decrypt_page(struct page *page)
+{
+	return 0;
+}
+
+int tcptfs_encrypt_page(struct page *page)
+{
+	return 0;
+}
+
 int encrypt(char *buf, size_t buflen, char *key, size_t keylen)
 {
 	int i;

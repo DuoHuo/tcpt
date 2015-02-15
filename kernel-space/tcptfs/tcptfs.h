@@ -19,6 +19,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/crypto.h>
+#include <linux/pagemap.h>
 
 /* the file system name */
 #define TCPTFS_NAME "tcptfs"
@@ -201,6 +202,8 @@ static inline  void hexdump(unsigned char *buf,unsigned int len) {
     printk("\n");
 }
 
+int tcptfs_decrypt_page(struct page *page);
+int tcptfs_encrypt_page(struct page *page);
 int encrypt(char *buf, size_t buflen, char *key, size_t keylen);
 int decrypt(char *buf, size_t buflen, char *key, size_t keylen);
 

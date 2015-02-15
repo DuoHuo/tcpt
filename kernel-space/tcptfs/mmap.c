@@ -1,9 +1,78 @@
 #include "tcptfs.h"
 
+/**
+ * tcptfs_read_lower
+ * @data: The data read is stored in this location
+ * @offset: Byte offset in the lower file
+ * @size: Number of bytes to read
+ * @tcptfs_inode: the tcptfs inode
+ * @lower_file: the lower file
+ *
+ * Read @size bytes of data at byte offset @offset from the lower
+ * inode into memory location @data.
+ *
+ * Returns bytes read on success; 0 on EOF; less than zero on error
+ */
+static int tcptfs_read_lower(char *data, loff_t offset, size_t size,
+			struct inode *tcptfs_inode, struct file *lower_file)
+{
+	mm_segment_t fs_save;
+	ssize_t rc;
+
+	fs_save = get_fs();
+	set_fs(get_ds());
+	rc = vfs_read(lower_file, data, size, &offset);
+	set_fs(fs_save);
+	printk(KERN_ERR "RRRRRRReturn from tcptfs_read_lower with rc=%d\n", rc);
+	return rc;
+}
+
+/**
+ * tcptfs_readpage_from_lower
+ * @tcptfs_file: the tcptfs file
+ * @page: the page we will deal with
+ *
+ * tcptfs_readpage_from_lower is a wrapper of tcptfs_read_lower
+ * It prepare parameters, convert upper file to lower file, for
+ * tcptfs_read_lower.
+ *
+ * Returns 0 if success else negative.
+ */
+static int tcptfs_readpage_from_lower(struct file *tcptfs_file, struct page *page)
+{
+	loff_t offset;	/* offset in file */
+	struct file *lower_file;
+	char *virt;
+	int rc;
+
+	offset = ((loff_t)page->index) << PAGE_CACHE_SHIFT;
+	virt = kmap(page);
+	lower_file = tcptfs_lower_file(tcptfs_file);
+	if (!lower_file)
+		return -EIO;
+	rc = tcptfs_read_lower(virt, offset, PAGE_CACHE_SIZE, page->mapping->host, lower_file);
+	if (rc >0)
+		/* tcptfs_read_lower return bytes read, but we return status */
+		rc = 0;
+	kunmap(page);
+	flush_dcache_page(page);
+	printk(KERN_ERR "RRRRRRReturn from tcptfs_readpage_from_lower with rc=%d\n",rc);
+	return rc;
+}
+
 static int tcptfs_readpage(struct file *file, struct page *page)
 {
-	printk(KERN_ERR "invoking tcptfs_readpage\n");
-	return 0;
+	int rc;
+
+	rc = tcptfs_readpage_from_lower(file, page);
+	rc = tcptfs_decrypt_page(page);
+	if (rc)
+		ClearPageUptodate(page);
+	else
+		SetPageUptodate(page);
+	unlock_page(page);
+	printk(KERN_ERR "RRRRRRRReturn from tcptfs_readpage with rc=%d\n", rc);
+	return rc;
 }
 
 static int tcptfs_writepage(struct page *page, struct writeback_control *wbc)
