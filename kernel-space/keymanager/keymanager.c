@@ -8,11 +8,12 @@
 #define DEVICE_NAME "key_manager"
 #define MAJOR_NUM 138
 #define KEY_LEN 20
+#define KEY_RING_LEN	128
 
 #define IOC_STOREKEY	0xee
 #define IOC_CLEARKEY	0xef
 
-uint8_t keyring[KEY_LEN];
+uint8_t keyring[KEY_RING_LEN];
 EXPORT_SYMBOL(keyring);
 
 long device_ioctl(
@@ -28,7 +29,7 @@ long device_ioctl(
         		break;
 		case IOC_CLEARKEY:
 			printk("Clearing keyring\n");
-			memset(keyring,0,KEY_LEN);
+			memset(keyring,0,KEY_RING_LEN);
 			break;
         }
 

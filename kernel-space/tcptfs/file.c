@@ -1,6 +1,4 @@
 #include "tcptfs.h"
-#define KEY_LEN 20
-extern uint8_t keyring[KEY_LEN];
 #if 0
 static ssize_t tcptfs_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *ppos)

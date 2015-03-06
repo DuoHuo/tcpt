@@ -202,6 +202,9 @@ static inline  void hexdump(unsigned char *buf,unsigned int len) {
     printk("\n");
 }
 
+#define KEY_LEN 20
+#define KEY_RING_LEN	128
+extern uint8_t keyring[KEY_RING_LEN];
 int tcptfs_decrypt_page(struct page *page);
 int tcptfs_encrypt_page(struct page *page);
 int encrypt(char *buf, size_t buflen, char *key, size_t keylen);
