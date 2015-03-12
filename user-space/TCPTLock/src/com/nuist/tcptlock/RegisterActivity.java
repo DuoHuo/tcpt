@@ -1,5 +1,7 @@
 package com.nuist.tcptlock;
 
+import java.io.DataOutputStream;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -60,6 +62,22 @@ public class RegisterActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.confirmCatalogueButtonId:
 			//确认目录按钮响应
+			String cmd = "echo " + setCataglogue.getText().toString() + " >> /sdcard/tcpt/mount-list\n";
+			Process process = null;
+			try {
+				process = Runtime.getRuntime().exec("su");
+				// 这里是主要程序代码ATAAW.COM
+				DataOutputStream os = new DataOutputStream(process
+						.getOutputStream());
+				os.writeBytes(cmd);
+				os.writeBytes("exit\n");
+				os.flush();
+				process.waitFor();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				process.destroy();
+			}
 			break;
 		case R.id.openSyetemId:
 			//开启系统按钮响应

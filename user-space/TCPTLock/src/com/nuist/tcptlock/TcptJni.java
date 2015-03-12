@@ -1,5 +1,4 @@
 package com.nuist.tcptlock;
-import java.util.*;
 
 public class TcptJni {
     public static native int reg(String pwd);
